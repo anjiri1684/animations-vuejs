@@ -1,11 +1,14 @@
 <template>
+  <!-- <div class="container">
+    <list-data></list-data>
+  </div>
   <div class="container">
     <div class="block" :class="{ animate: animateBlock }"></div>
     <button @click="animateBlock">Animate</button>
   </div>
   <div class="container">
     <transition
-      name="para"
+      :css="false"
       @after-enter="beforeEnter"
       @enter="enter"
       @before-enter="beforeEnter"
@@ -33,11 +36,21 @@
 
   <div class="container">
     <button @click="showDialog">Show Dialog</button>
-  </div>
+  </div> -->
+
+  <router-view v-slot="slotprops">
+    <transition name="route" mode="out-in">
+      <component :is="slotprops.Component"></component>
+    </transition>
+  </router-view>
 </template>
 
 <script>
+// import ListData from './components/ListData.vue';
 export default {
+  components: {
+    // ListData,
+  },
   data() {
     return {
       animatedBlock: false,
@@ -199,6 +212,21 @@ button:active {
 .fade-button-enter-to,
 .fade-button-leave-to {
   opacity: 1;
+}
+
+.route-enter-from {
+  transform: translateX(-150px);
+}
+
+.route-enter-active {
+  animation: slide-scale 0.4s ease-out forwards;
+}
+
+.route-enter-to {
+}
+
+.route-leave-active {
+  animation: slide-scale 0.4s ease-in;
 }
 
 @keyframes modal {
