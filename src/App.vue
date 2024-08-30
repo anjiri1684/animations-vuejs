@@ -3,10 +3,34 @@
     <div class="block" :class="{ animate: animateBlock }"></div>
     <button @click="animateBlock">Animate</button>
   </div>
-  <base-modal @close="hideDialog" v-if="dialogIsVisible">
+  <div class="container">
+    <transition
+      name="para"
+      @after-enter="beforeEnter"
+      @enter="enter"
+      @before-enter="beforeEnter"
+      @before-leave="beforeLeave"
+      @leave="leave"
+      @after-leave="afterLeave"
+      @after-cancelled="enterCancelled"
+      @leave-cancelled="leaveCancelled"
+    >
+      <p v-if="paraIsVisible">This is only sometimes visible...</p>
+    </transition>
+
+    <button @click="toggleParagraph">Toggle Paragraph</button>
+  </div>
+  <div class="container">
+    <transition name="fade-button" mode="out-in">
+      <button @click="showUsers" v-if="!usersAreVisible">Show Users</button>
+      <button @click="hideUsers" v-else>Hide Users</button>
+    </transition>
+  </div>
+  <base-modal @close="hideDialog" :open="dialogIsVisible">
     <p>This is a test dialog!</p>
     <button @click="hideDialog">Close it!</button>
   </base-modal>
+
   <div class="container">
     <button @click="showDialog">Show Dialog</button>
   </div>
@@ -18,9 +42,70 @@ export default {
     return {
       animatedBlock: false,
       dialogIsVisible: false,
+      paraIsVisible: false,
+      usersAreVisible: false,
+      enterInterval: null,
+      leaveInterval: null,
     };
   },
   methods: {
+    enterCancelled(el) {
+      console.log('enterCancelled', el);
+      clearInterval(this.enterInterval);
+    },
+    leaveCancelled(el) {
+      console.log('leaveCancelled', el);
+      clearInterval(this.leaveInterval);
+    },
+    leave(el, done) {
+      console.log('Leaving');
+      console.log(el);
+      let round = 1;
+      this.enterCancelled = setInterval(() => {
+        el.style.opacity = 1 - round * 0.01;
+        round += 1;
+        if (round > 100) {
+          clearInterval(this.enterInterval);
+          done();
+        }
+      }, 20);
+    },
+    afterLeave(el) {
+      console.log('After leaving');
+      console.log(el);
+    },
+    afterEnter(el) {
+      console.log('afterEnter', el);
+    },
+    enter(el, done) {
+      console.log('Entering...');
+      console.log(el);
+      let round = 1;
+      this.leaveInterval = setInterval(() => {
+        el.style.opacity = round * 0.01;
+        round += 1;
+        if (round > 100) {
+          clearInterval(this.leaveInterval);
+          done();
+        }
+      }, 20);
+    },
+    beforeLeave(el) {
+      console.log('before leave');
+      console.log(el);
+      el.style.opacity = 1;
+    },
+    beforeEnter(el) {
+      console.log('beforeEnter');
+      console.log(el);
+      el.style.opacity = 0;
+    },
+    showUsers() {
+      this.usersAreVisible = true;
+    },
+    hideUsers() {
+      this.usersAreVisible = false;
+    },
     showDialog() {
       this.dialogIsVisible = true;
     },
@@ -29,6 +114,9 @@ export default {
     },
     animateBlock() {
       this.animatedBlock = true;
+    },
+    toggleParagraph() {
+      this.paraIsVisible = !this.paraIsVisible;
     },
   },
 };
@@ -78,10 +166,53 @@ button:active {
 }
 .animate {
   /* transform: translateX(-150px); */
-  animation: slide-fade 0.3s ease-out forwards;
+  animation: slide-scale 0.3s ease-out forwards;
 }
 
-@keyframes slide-fade {
+.para-enter-active {
+  transition: opacity 0.3s ease-out;
+}
+
+.para-leave-active {
+  /* transition: all 0.3s ease-in; */
+  animation: slide-scale 0.3s ease-out;
+}
+
+.para-enter-to {
+  opacity: 1;
+  transform: translateY(30px);
+}
+
+.fade-button-enter-from,
+.fade-button-leave-to {
+  opacity: 0;
+}
+
+.fade-button-enter-active {
+  transition: opacity 0.3s ease-out;
+}
+
+.fade-button-leave-active {
+  transition: opacity 0.3s ease-in;
+}
+
+.fade-button-enter-to,
+.fade-button-leave-to {
+  opacity: 1;
+}
+
+@keyframes modal {
+  from {
+    opacity: 0;
+    transform: translateY(-50px) scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes slide-scale {
   0% {
     transform: translateX(0) scale(1);
   }
